@@ -23,7 +23,7 @@ import ImageGrid from "@/components/image-grid";
 import { debounce } from "lodash";
 import { logBanner } from "@/utils/logger";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import FilerModal from "@/components/filter-modal";
+import FilterModal from "@/components/filter-modal";
 
 let page = 1;
 
@@ -42,6 +42,14 @@ const HomeScreen = () => {
   const [filters, setFilters] = useState<Record<string, string | null> | null>(
     null
   );
+
+  const filtersRef = useRef<Record<string, string | null>>({});
+
+  useEffect(() => {
+    if (filters) {
+      filtersRef.current = filters;
+    }
+  }, [filters]);
 
   useEffect(() => {
     fetchImages();
@@ -63,53 +71,105 @@ const HomeScreen = () => {
     }
   };
 
+  const openFilterModal = () => modalRef.current?.present();
+  const closeFilterModal = () => modalRef.current?.close();
+
+  const applyFilters = () => {
+    if (filters) {
+      page = 1;
+      setImages([]);
+      let params: { page: number; q?: string; category?: string } = {
+        page,
+        ...filters,
+      };
+      if (activeCategory) params.category = activeCategory;
+      if (search) params.q = search;
+      fetchImages(params, false);
+    }
+    closeFilterModal();
+  };
+
+  const resetFilters = () => {
+    if (filters) {
+      page = 1;
+      setFilters(null);
+      setImages([]);
+      let params: { page: number; q?: string; category?: string } = {
+        page,
+      };
+      if (activeCategory) params.category = activeCategory;
+      if (search) params.q = search;
+      fetchImages(params, false);
+    }
+    closeFilterModal();
+  };
+
   const handleActiveCategory = (cat: string | null) => {
     setActiveCategory(cat);
-    clearSearch();
-    setImages([]);
+    setSearch("");
+    searchInputRef.current?.clear(); // clear visible input
+
     page = 1;
-    let params: { page: number; q?: string; category?: string } = { page };
+    setImages([]);
+
+    let params: { page: number; q?: string; category?: string } = {
+      page,
+      ...filters,
+    };
+
     if (cat) params.category = cat;
+
     fetchImages(params, false);
   };
 
   const handleSearch = (text: string) => {
     setSearch(text);
-    if (text.length > 2) {
-      // search for this text
-      page = 1;
-      setImages([]);
-      setActiveCategory(null);
-      fetchImages({ page, q: text }, false);
-    }
+    setActiveCategory(null);
+    page = 1;
 
-    if (text == "") {
-      // reset results
-      page = 1;
-      searchInputRef.current?.clear();
+    const currentFilters = filtersRef.current || {};
+
+    if (text.length > 2 || text === "") {
+      if (text === "") {
+        searchInputRef.current?.clear();
+      }
+
       setImages([]);
-      setActiveCategory(null);
-      fetchImages({ page });
+
+      let params: { page: number; q?: string; category?: string } = {
+        page,
+        ...currentFilters,
+      };
+
+      if (text) {
+        params.q = text;
+      }
+
+      logBanner("filters at search", currentFilters);
+      logBanner("params", { params, append: false });
+
+      fetchImages(params, false);
     }
   };
 
   const clearSearch = () => {
     setSearch("");
     searchInputRef.current?.clear();
+
+    page = 1;
+    setImages([]);
+
+    let params: { page: number; q?: string; category?: string } = {
+      page,
+      ...filters,
+    };
+
+    if (activeCategory) params.category = activeCategory;
+
+    fetchImages(params, false);
   };
 
   const handleTxetDebounce = useCallback(debounce(handleSearch, 400), []);
-
-  const openFilterModal = () => modalRef.current?.present();
-  const closeFilterModal = () => modalRef.current?.close();
-
-  const applyFilters = () => {
-    logBanner("applying filters");
-  };
-
-  const resetFilters = () => {
-    logBanner("resetting filters");
-  };
 
   logBanner("filters", filters);
 
@@ -144,15 +204,11 @@ const HomeScreen = () => {
           <TextInput
             placeholder="Search for photos"
             style={styles.searchInput}
-            // value={search}
             onChangeText={handleTxetDebounce}
             ref={searchInputRef}
           />
           {search && (
-            <Pressable
-              style={styles.closeIcon}
-              onPress={() => handleSearch("")}
-            >
+            <Pressable style={styles.closeIcon} onPress={clearSearch}>
               <Ionicons
                 name="close"
                 size={22}
@@ -175,7 +231,7 @@ const HomeScreen = () => {
       </ScrollView>
 
       {/* Filter Modal */}
-      <FilerModal
+      <FilterModal
         modalRef={modalRef}
         filters={filters}
         setFilters={setFilters}
