@@ -45,9 +45,41 @@ export const CommonFilterRow = ({
               key={item}
               style={[styles.outlinedButton, { backgroundColor }]}
             >
-              <Text style={[styles.outlinedButtonText, { color }]}>
-                {capitalizeWords(item)}
-              </Text>
+              <Text style={[{ color }]}>{capitalizeWords(item)}</Text>
+            </Pressable>
+          );
+        })}
+    </View>
+  );
+};
+
+export const ColorFilterRow = ({
+  data,
+  filters,
+  setFilters,
+  filterName,
+}: any) => {
+  const onSelect = (item: string) => {
+    setFilters({ ...filters, [filterName]: item });
+  };
+
+  return (
+    <View style={styles.flexRowWrap}>
+      {data &&
+        data.map((item: any) => {
+          let isActive = filters && filters[filterName] === item;
+          let borderColor = isActive
+            ? theme.colors.neutral(0.4)
+            : theme.colors.white;
+
+          return (
+            <Pressable
+              onPress={() => onSelect(isActive ? null : item)}
+              key={item}
+            >
+              <View style={[styles.colorWrapper, { borderColor }]}>
+                <View style={[styles.color, { backgroundColor: item }]} />
+              </View>
             </Pressable>
           );
         })}
@@ -80,7 +112,19 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
 
-  outlinedButtonText: {},
+  color: {
+    height: 30,
+    width: 40,
+    borderRadius: theme.radius.sm - 3,
+    borderCurve: "continuous",
+  },
+
+  colorWrapper: {
+    padding: 3,
+    borderRadius: theme.radius.sm,
+    borderWidth: 2,
+    // borderCurve: "continuous",
+  },
 });
 
 export default SectionView;
