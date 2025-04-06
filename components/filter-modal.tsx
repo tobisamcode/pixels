@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ViewStyle, Pressable } from "react-native";
-import React, { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import React, { Dispatch, SetStateAction, useMemo } from "react";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 
 import { BlurView } from "expo-blur";
@@ -12,7 +12,6 @@ import { capitalizeWords, hp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
 import SectionView, { ColorFilterRow, CommonFilterRow } from "./section-view";
 import { data } from "@/constants/data";
-import { logBanner } from "@/utils/logger";
 
 interface Props {
   modalRef: React.RefObject<BottomSheetModal>;
