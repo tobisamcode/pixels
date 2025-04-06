@@ -39,7 +39,9 @@ const HomeScreen = () => {
 
   const modalRef = useRef<BottomSheetModal>(null);
 
-  const [filters, setFilters] = useState(null);
+  const [filters, setFilters] = useState<Record<string, string | null> | null>(
+    null
+  );
 
   useEffect(() => {
     fetchImages();
@@ -108,6 +110,8 @@ const HomeScreen = () => {
   const resetFilters = () => {
     logBanner("resetting filters");
   };
+
+  logBanner("filters", filters);
 
   return (
     <View style={[styles.container, { paddingTop }]}>

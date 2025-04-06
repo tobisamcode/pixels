@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ViewStyle } from "react-native";
-import React, { ReactNode, useMemo } from "react";
+import React, { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 
 import { BlurView } from "expo-blur";
@@ -16,8 +16,8 @@ import { logBanner } from "@/utils/logger";
 
 interface Props {
   modalRef: React.RefObject<BottomSheetModal>;
-  filters: any;
-  setFilters: (filters: any) => void;
+  filters: Record<string, string | null> | null;
+  setFilters: Dispatch<SetStateAction<Record<string, string | null> | null>>;
   onApply: () => void;
   onReset: () => void;
   onClose: () => void;
@@ -25,11 +25,11 @@ interface Props {
 
 const FilerModal = ({
   modalRef,
-  onClose,
   filters,
+  setFilters,
+  onClose,
   onApply,
   onReset,
-  setFilters,
 }: Props) => {
   const snapPoints = useMemo(() => ["75%"], []);
 
@@ -49,8 +49,6 @@ const FilerModal = ({
             let sectionView = sections[sectionName as keyof typeof sections];
             let sectionData =
               data.filters[sectionName as keyof typeof data.filters];
-
-            logBanner("sectionData", sectionData);
 
             let title = capitalizeWords(sectionName);
             return (
@@ -73,10 +71,14 @@ const FilerModal = ({
   );
 };
 
-const sections: Record<
-  string,
-  React.FC<{ data: any; filters: any; setFilters: any; filterName: string }>
-> = {
+export interface ContentProps {
+  data: string[];
+  filters: Record<string, string | null> | null;
+  setFilters: Dispatch<SetStateAction<Record<string, string | null> | null>>;
+  filterName: string;
+}
+
+const sections: Record<string, React.FC<ContentProps>> = {
   order: (props) => <CommonFilterRow {...props} />,
   orientation: (props) => <CommonFilterRow {...props} />,
   type: (props) => <CommonFilterRow {...props} />,
