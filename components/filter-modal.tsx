@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ViewStyle } from "react-native";
+import { View, Text, StyleSheet, ViewStyle, Pressable } from "react-native";
 import React, { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 
@@ -10,7 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { capitalizeWords, hp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
-import SectionView, { CommonFilterRow } from "./section-view";
+import SectionView, { ColorFilterRow, CommonFilterRow } from "./section-view";
 import { data } from "@/constants/data";
 import { logBanner } from "@/utils/logger";
 
@@ -23,7 +23,7 @@ interface Props {
   onClose: () => void;
 }
 
-const FilerModal = ({
+const FilterModal = ({
   modalRef,
   filters,
   setFilters,
@@ -65,6 +65,26 @@ const FilerModal = ({
               </View>
             );
           })}
+
+          {/* Actions */}
+          <View style={styles.buttons}>
+            <Pressable style={styles.resetButton} onPress={onReset}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { color: theme.colors.neutral(0.9) },
+                ]}
+              >
+                Reset
+              </Text>
+            </Pressable>
+
+            <Pressable style={styles.applyButton} onPress={onApply}>
+              <Text style={[styles.buttonText, { color: theme.colors.white }]}>
+                Apply
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </BottomSheetView>
     </BottomSheetModal>
@@ -82,7 +102,7 @@ const sections: Record<string, React.FC<ContentProps>> = {
   order: (props) => <CommonFilterRow {...props} />,
   orientation: (props) => <CommonFilterRow {...props} />,
   type: (props) => <CommonFilterRow {...props} />,
-  colors: (props) => <CommonFilterRow {...props} />,
+  colors: (props) => <ColorFilterRow {...props} />,
 };
 
 const Custombackdrop = ({
@@ -132,7 +152,8 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    width: "100%",
+    flex: 1,
+    // width: "100%",
     gap: 15,
     paddingVertical: 10,
     paddingHorizontal: 15,
@@ -144,6 +165,37 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral(0.8),
     marginBottom: 5,
   },
+
+  buttons: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  resetButton: {
+    flex: 1,
+    backgroundColor: theme.colors.neutral(0.05),
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.radius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.grayBG,
+  },
+
+  applyButton: {
+    flex: 1,
+    backgroundColor: theme.colors.neutral(0.8),
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.radius.md,
+  },
+
+  buttonText: {
+    fontSize: hp(2.2),
+  },
 });
 
-export default FilerModal;
+export default FilterModal;
