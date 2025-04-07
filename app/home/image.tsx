@@ -118,12 +118,7 @@ const ImageScreen = () => {
   };
 
   return (
-    <BlurView
-      experimentalBlurMethod="dimezisBlurView"
-      tint="dark"
-      intensity={60}
-      style={styles.container}
-    >
+    <BlurView tint="dark" intensity={60} style={styles.container}>
       <View style={[getSize()]}>
         <View style={styles.loading}>
           {status === "loading" && (
