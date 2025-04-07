@@ -4,8 +4,10 @@ import { Hit } from "@/types/api";
 import { getImageSize, wp } from "@/helpers/common";
 import { Image } from "expo-image";
 import { theme } from "@/constants/theme";
+import { Router } from "expo-router";
 
 const ImageCard = ({
+  router,
   item,
   index,
   column,
@@ -13,6 +15,7 @@ const ImageCard = ({
   item: Hit;
   index: number;
   column: number;
+  router: Router;
 }) => {
   const isLastInrow = () => (index + 1) % column === 0;
 
@@ -22,7 +25,20 @@ const ImageCard = ({
   };
 
   return (
-    <Pressable style={[styles.imageWrapper, !isLastInrow() && styles.spacing]}>
+    <Pressable
+      style={[styles.imageWrapper, !isLastInrow() && styles.spacing]}
+      onPress={() =>
+        router.push({
+          pathname: "/home/image",
+          params: {
+            previewURL: item.previewURL,
+            webformatURL: item.webformatURL,
+            imageWidth: item.imageWidth,
+            imageHeight: item.imageHeight,
+          },
+        })
+      }
+    >
       <Image
         style={[styles.image, getImageHeight()]}
         source={{ uri: item.webformatURL }}
