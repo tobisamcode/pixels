@@ -5,8 +5,9 @@ import { Hit } from "@/types/api";
 import { MasonryFlashList } from "@shopify/flash-list";
 import ImageCard from "./image-card";
 import { getColumnCount, wp } from "@/helpers/common";
+import { Router } from "expo-router";
 
-const ImageGrid = ({ images }: { images: Hit[] }) => {
+const ImageGrid = ({ images, router }: { images: Hit[]; router: Router }) => {
   const column = getColumnCount();
   return (
     <View style={styles.container}>
@@ -15,7 +16,12 @@ const ImageGrid = ({ images }: { images: Hit[] }) => {
         numColumns={column}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item, index }) => (
-          <ImageCard item={item} index={index} column={column!} />
+          <ImageCard
+            item={item}
+            router={router}
+            index={index}
+            column={column!}
+          />
         )}
         estimatedItemSize={200}
       />
