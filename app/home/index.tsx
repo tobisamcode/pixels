@@ -6,7 +6,11 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from "react-native";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -20,10 +24,11 @@ import { apiCall } from "@/api";
 import { Hit } from "@/types/api";
 import ImageGrid from "@/components/image-grid";
 
-import { debounce } from "lodash";
+import { debounce, set } from "lodash";
 import { logBanner } from "@/utils/logger";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import FilterModal from "@/components/filter-modal";
+import { useRouter } from "expo-router";
 
 let page = 1;
 
@@ -31,19 +36,20 @@ const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
   const paddingTop = top > 0 ? top + 10 : 30;
 
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const searchInputRef = useRef<TextInput>(null);
-
   const [images, setImages] = useState<Hit[]>([]);
-
   const modalRef = useRef<BottomSheetModal>(null);
-
-  const [filters, setFilters] = useState<Record<string, string | null> | null>(
-    null
-  );
-
-  const filtersRef = useRef<Record<string, string | null>>({});
+  const [filters, setFilters] = useState<Record<
+    string,
+    string | null
+  > | null | null>(null);
+  const filtersRef = useRef<Record<string, string | null> | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const [isEndReached, setIsEndReached] = useState(false);
 
   useEffect(() => {
     if (filters) {
@@ -57,7 +63,7 @@ const HomeScreen = () => {
 
   const fetchImages = async (
     params: any = { page: 1 },
-    append: boolean = false
+    append: boolean = true
   ) => {
     logBanner("params", { params, append });
     let res = await apiCall({ ...params });
@@ -169,15 +175,64 @@ const HomeScreen = () => {
     fetchImages(params, false);
   };
 
-  const handleTxetDebounce = useCallback(debounce(handleSearch, 400), []);
-
   logBanner("filters", filters);
+
+  const clearThisFilter = (filterName: string) => {
+    let updatedFilters = { ...filters };
+    delete updatedFilters[filterName];
+    setFilters(updatedFilters);
+    page = 1;
+    setImages([]);
+    let params: { page: number; q?: string; category?: string } = {
+      page,
+      ...updatedFilters,
+    };
+    if (activeCategory) params.category = activeCategory;
+    if (search) params.q = search;
+    fetchImages(params, false);
+  };
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const contentHeight = event.nativeEvent.contentSize.height;
+      const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+      const scrollOffset = event.nativeEvent.contentOffset.y;
+      const bottomPosition = contentHeight - scrollViewHeight;
+
+      if (scrollOffset > bottomPosition - 1) {
+        if (!isEndReached) {
+          setIsEndReached(true);
+          logBanner("isEndReached", isEndReached);
+
+          // fetch more images
+          ++page;
+          let params: { page: number; q?: string; category?: string } = {
+            page,
+            ...filters,
+          };
+
+          if (activeCategory) params.category = activeCategory;
+          if (search) params.q = search;
+          fetchImages(params);
+        }
+      } else if (isEndReached) {
+        setIsEndReached(false);
+      }
+    },
+    [isEndReached, filters, activeCategory, search]
+  );
+
+  const handleScrollUp = () => {
+    scrollRef?.current?.scrollTo({ y: 0, animated: true });
+  };
+
+  const handleTxetDebounce = useCallback(debounce(handleSearch, 400), []);
 
   return (
     <View style={[styles.container, { paddingTop }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable>
+        <Pressable onPress={handleScrollUp}>
           <Text style={styles.title}>Pixels</Text>
         </Pressable>
 
@@ -190,7 +245,12 @@ const HomeScreen = () => {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ gap: 15 }}>
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={5} // ==> 5ms debounce scroll events i.e when user scrolls, how often scroll event is fired
+        ref={scrollRef}
+        contentContainerStyle={{ gap: 15 }}
+      >
         {/* Search bar */}
         <View style={styles.searchBar}>
           <View style={styles.searchIcon}>
@@ -226,8 +286,57 @@ const HomeScreen = () => {
           />
         </View>
 
+        {/* Applied Filters */}
+        {filters && (
+          <View>
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filters}
+            >
+              {Object.keys(filters).map((filterName) => {
+                return (
+                  <View key={filterName} style={styles.filterItem}>
+                    {filterName === "colors" ? (
+                      <View
+                        style={[
+                          styles.colorFilter,
+                          { backgroundColor: filters[filterName]! },
+                        ]}
+                      />
+                    ) : (
+                      <Text style={styles.filterItemText}>
+                        {filters[filterName]}
+                      </Text>
+                    )}
+                    <Pressable
+                      style={styles.filterCloseIcon}
+                      onPress={() => clearThisFilter(filterName)}
+                    >
+                      <Ionicons
+                        name="close"
+                        size={14}
+                        color={theme.colors.neutral(0.9)}
+                      />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Images */}
-        <View>{images.length > 0 && <ImageGrid images={images} />}</View>
+        <View>
+          {images.length > 0 && <ImageGrid router={router} images={images} />}
+        </View>
+
+        {/* Loading */}
+        <View
+          style={{ marginBottom: 70, marginTop: images.length > 0 ? 10 : 70 }}
+        >
+          <ActivityIndicator size="large" />
+        </View>
       </ScrollView>
 
       {/* Filter Modal */}
@@ -293,6 +402,37 @@ const styles = StyleSheet.create({
   },
 
   categories: {},
+
+  filters: {
+    paddingHorizontal: wp(4),
+    gap: 10,
+  },
+
+  filterItem: {
+    backgroundColor: theme.colors.grayBG,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: theme.radius.xs,
+    gap: 10,
+    paddingHorizontal: 10,
+  },
+
+  filterItemText: {
+    fontSize: hp(1.8),
+  },
+
+  filterCloseIcon: {
+    backgroundColor: theme.colors.neutral(0.2),
+    padding: 4,
+    borderRadius: 7,
+  },
+
+  colorFilter: {
+    height: 20,
+    width: 30,
+    borderRadius: 7,
+  },
 });
 
 export default HomeScreen;
