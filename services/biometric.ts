@@ -15,9 +15,6 @@ export interface BiometricCapabilities {
 }
 
 class BiometricService {
-  /**
-   * Check if biometric authentication is available on the device
-   */
   async checkBiometricCapabilities(): Promise<BiometricCapabilities> {
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -47,9 +44,6 @@ class BiometricService {
     }
   }
 
-  /**
-   * Authenticate user with biometrics
-   */
   async authenticateWithBiometrics(): Promise<BiometricAuthResult> {
     try {
       const capabilities = await this.checkBiometricCapabilities();
@@ -90,9 +84,6 @@ class BiometricService {
     }
   }
 
-  /**
-   * Get a user-friendly name for the biometric type
-   */
   private getBiometricTypeName(
     types: LocalAuthentication.AuthenticationType[]
   ): string {
@@ -115,9 +106,6 @@ class BiometricService {
     return "Biometric Authentication";
   }
 
-  /**
-   * Get biometric icon based on available types
-   */
   getBiometricIcon(types: LocalAuthentication.AuthenticationType[]): string {
     if (
       types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)

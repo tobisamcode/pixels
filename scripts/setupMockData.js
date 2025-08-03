@@ -1,6 +1,3 @@
-// Script to populate MockAPI.io with initial data
-// Run this with: node scripts/setupMockData.js
-
 const BASE_URL = "https://6799de9f1169123a8e2bc926.mockapi.io/api/v1";
 
 const users = [
@@ -85,7 +82,6 @@ async function setupMockData() {
   try {
     console.log("Setting up mock data...");
 
-    // Create users
     console.log("Creating users...");
     const createdUsers = [];
     for (const user of users) {
